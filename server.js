@@ -8,7 +8,10 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Rate limiting middleware
+// ✅ FIX 1: Trust proxy for Render/production environments
+app.set('trust proxy', 1);
+
+// ✅ FIX 2: Updated rate limiting middleware
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 50, // limit each IP to 50 requests per windowMs
@@ -17,14 +20,18 @@ const limiter = rateLimit({
     },
     standardHeaders: true,
     legacyHeaders: false,
+    // Skip rate limiting for health checks
+    skip: (req) => req.path === '/' || req.path === '/api/health' || req.path === '/api/info'
 });
 
-// Middleware setup
+// ✅ FIX 3: Updated CORS for production
 app.use(cors({
     origin: process.env.NODE_ENV === 'production' 
-        ? ['https://yourdomain.com'] 
-        : ['http://localhost:3000', 'http://localhost:3001', 'http://127.0.0.1:3001']
+        ? true  // Allow all origins in production (can be restricted later)
+        : ['http://localhost:3000', 'http://localhost:3001', 'http://127.0.0.1:3001'],
+    credentials: true
 }));
+
 app.use(express.json({ limit: '10mb' }));
 app.use('/api', limiter);
 
@@ -68,6 +75,22 @@ CALCULATIONS:
 
 Be professional, accurate, and helpful while keeping responses concise.`;
 
+// ✅ FIX 4: Root endpoint for health check
+app.get('/', (req, res) => {
+    res.json({ 
+        message: 'ConstructAI is running!',
+        status: 'healthy',
+        timestamp: new Date().toISOString(),
+        version: '1.0.0',
+        endpoints: {
+            health: '/api/health',
+            chat: '/api/chat',
+            stream: '/api/chat/stream',
+            info: '/api/info'
+        }
+    });
+});
+
 // Health check endpoint
 app.get('/api/health', (req, res) => {
     res.json({ 
@@ -75,7 +98,8 @@ app.get('/api/health', (req, res) => {
         timestamp: new Date().toISOString(),
         ai_ready: !!OPENAI_API_KEY,
         environment: process.env.NODE_ENV || 'development',
-        model: 'gpt-3.5-turbo'
+        model: 'gpt-3.5-turbo',
+        uptime: process.uptime()
     });
 });
 
@@ -165,7 +189,7 @@ app.post('/api/chat/stream', async (req, res) => {
         // Handle stream end
         response.data.on('end', () => {
             console.log('📝 Stream ended');
-            if (!res.headersSent || !res.destroyed) {
+            if (!res.headersSent && !res.destroyed) {
                 try {
                     res.end();
                 } catch (e) {
@@ -296,13 +320,18 @@ app.get('/api/info', (req, res) => {
     res.json({
         name: 'ConstructAI API',
         version: '1.0.0',
+        description: 'AI-powered construction industry assistant',
         endpoints: {
             health: 'GET /api/health',
             chat: 'POST /api/chat',
-            stream: 'POST /api/chat/stream'
+            stream: 'POST /api/chat/stream',
+            info: 'GET /api/info'
         },
         models: ['gpt-3.5-turbo'],
-        features: ['streaming', 'rate-limiting', 'error-handling']
+        features: ['streaming', 'rate-limiting', 'error-handling', 'cors-enabled'],
+        environment: process.env.NODE_ENV || 'development',
+        uptime: process.uptime(),
+        timestamp: new Date().toISOString()
     });
 });
 
@@ -329,7 +358,8 @@ const server = app.listen(PORT, () => {
     console.log(`🤖 AI Model: gpt-3.5-turbo (fast & efficient)`);
     console.log(`⚡ Streaming: Enabled`);
     console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
-    console.log(`📡 CORS: ${process.env.NODE_ENV === 'production' ? 'Production domains' : 'Development (localhost)'}`);
+    console.log(`📡 CORS: ${process.env.NODE_ENV === 'production' ? 'Production mode (all origins)' : 'Development (localhost)'}`);
+    console.log(`🛡️  Trust Proxy: Enabled`);
     console.log('='.repeat(50));
     console.log(`📱 Frontend: http://localhost:${PORT}`);
     console.log(`🔍 Health check: http://localhost:${PORT}/api/health`);
