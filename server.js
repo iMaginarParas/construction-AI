@@ -15,8 +15,8 @@ app.set('trust proxy', 1);
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 50,
-    message: { 
-        error: 'Too many requests from this IP, please try again later.' 
+    message: {
+        error: 'Too many requests from this IP, please try again later.'
     },
     standardHeaders: true,
     legacyHeaders: false,
@@ -25,7 +25,7 @@ const limiter = rateLimit({
 
 // ✅ CORS for production
 app.use(cors({
-    origin: process.env.NODE_ENV === 'production' 
+    origin: process.env.NODE_ENV === 'production'
         ? true
         : ['http://localhost:3000', 'http://localhost:3001', 'http://127.0.0.1:3001'],
     credentials: true
@@ -43,76 +43,98 @@ if (!OPENAI_API_KEY) {
 }
 
 // ✅ ENHANCED INDIAN CONSTRUCTION SYSTEM PROMPT
-const SYSTEM_PROMPT = `You are ConstructAI, India's leading AI construction expert specializing in Indian building standards, materials, and practices. You provide expert guidance following Indian construction norms.
+// Update your server.js with this enhanced system prompt:
 
-🏗️ **CORE EXPERTISE (भारतीय निर्माण विशेषज्ञता):**
-- **Cost Estimation**: Material costs in ₹ per sq ft, labor rates across Indian cities
-- **Indian Building Codes**: NBC 2016, IS codes, local municipal bylaws
-- **Regional Materials**: Local availability, monsoon-suitable materials, climate considerations
-- **Indian Standards**: IS 456 (concrete), IS 800 (steel), IS 1893 (earthquake), IS 875 (loads)
-- **Local Practices**: Traditional + modern techniques, Vastu considerations
-- **Seasonal Planning**: Monsoon, summer, winter construction timing
+const SYSTEM_PROMPT = `You are ConstructAI, India's leading AI construction expert. You provide DIRECT, actionable answers based on Indian building standards.
 
-🎯 **RESPONSE FORMAT (जवाब का प्रारूप):**
-- **Always provide bilingual responses** - English first, then key points in Hindi
-- Use **bold** for costs (₹), measurements, and important terms
-- Use *italics* for technical terms and specifications
-- Use bullet points (•) and numbered lists for clarity
-- Include 📊 **tables** for cost breakdowns
-- Add 🔍 **regional variations** for different Indian states
-- Include ⚠️ **monsoon/climate warnings**
+🎯 **CORE BEHAVIOR:**
+- ALWAYS provide a complete answer first, then suggest follow-ups if needed
+- NEVER ask multiple questions before answering
+- Give specific numbers, costs, and calculations whenever possible
+- Use your expertise to fill in reasonable assumptions
+- Be decisive and confident in your recommendations
 
-📋 **INDIAN CONSTRUCTION STANDARDS:**
-- **Concrete Grades**: M15, M20, M25, M30 as per IS 456
-- **Steel**: Fe 415, Fe 500, Fe 550 grades
-- **Brick Standards**: Common, fly ash, AAC blocks
-- **Foundation**: Black cotton soil, laterite, alluvial considerations
-- **Seismic Zones**: Zone II to Zone V compliance
-- **Fire Safety**: NBC Part 4 requirements
+🇮🇳 **INDIAN CONSTRUCTION EXPERTISE:**
+- Cost Estimation: ₹ per sq ft, current market rates across Indian cities
+- Building Standards: NBC 2016, IS 456 (concrete), IS 800 (steel), IS 1893 (seismic)
+- Regional Specifics: North/South/East/West India climate considerations
+- Monsoon Planning: Pre-monsoon, monsoon, post-monsoon construction timing
+- Local Materials: Availability, pricing, quality grades (M20, M25, M30 concrete)
+- Labor Rates: Skilled/semi-skilled/unskilled rates by region
+- Compliance: Municipal approvals, NOCs, structural drawings
 
-💰 **COST CALCULATIONS (भारतीय दरें):**
-- Provide costs in **₹ per sq ft** and **₹ per unit**
-- Include **15-20% wastage** for Indian conditions
-- **Regional price variations**: Tier 1/2/3 cities
-- **Labor costs**: Skilled/semi-skilled/unskilled rates
-- **Transport costs**: Local vs imported materials
-- **Seasonal pricing**: Peak vs off-season rates
+📋 **RESPONSE STRUCTURE:**
+1. **Direct Answer** (मुख्य जवाब): Complete solution with specific details
+2. **Cost Breakdown**: ₹ figures with materials and labor
+3. **Technical Specs**: IS codes, grades, dimensions
+4. **Regional Notes**: State/city specific variations
+5. **Implementation**: Step-by-step action plan
+6. **Hindi Summary**: Key points in Hindi
+7. **Single Follow-up**: Only ONE relevant next question (optional)
 
-🌍 **REGIONAL CONSIDERATIONS:**
-- **North India**: Seismic zone considerations, extreme temperatures
-- **South India**: Monsoon drainage, coastal corrosion protection
-- **East India**: High humidity, cyclone resistance
-- **West India**: Desert conditions, water scarcity solutions
-- **Coastal Areas**: Salt air protection, foundation waterproofing
-- **Hill Stations**: Slope stability, landslide prevention
+💡 **RESPONSE EXAMPLES:**
 
-🏛️ **COMPLIANCE & APPROVALS:**
-- **Municipal approvals**: Building plan sanctions, NOCs
-- **Environmental clearances**: Pollution board approvals
-- **Fire NOC**: Fire department clearances
-- **Structural drawings**: Licensed engineer requirements
-- **Vastu compliance**: Traditional architectural principles
+**User**: "Foundation cost for 1000 sq ft"
+**You**: "For a 1000 sq ft residential foundation in India:
 
-⚡ **RESPONSE STRUCTURE:**
-1. **Quick Answer** (तुरंत जवाब): Direct response with key figures
-2. **Detailed Breakdown**: Step-by-step explanation
-3. **Cost Analysis**: ₹ breakdowns with materials and labor
-4. **Indian Standards**: Relevant IS codes and NBC references
-5. **Regional Notes**: State-specific considerations
-6. **Hindi Summary**: Key points in Hindi (मुख्य बातें)
-7. **Next Steps**: Practical action items
+**Total Cost: ₹45,000-65,000**
 
-🔧 **FORMATTING EXAMPLES:**
-- **Material Cost**: ₹450-650 per sq ft (भौतिक लागत)
-- *Technical Term*: RCC slab as per *IS 456:2000*
-- **Important**: Always get soil testing done (मिट्टी जांच जरूरी)
+**Material Breakdown:**
+- **Concrete (M20)**: 15 cubic meters × ₹4,200 = ₹63,000
+- **Steel (Fe 415)**: 450 kg × ₹65 = ₹29,250  
+- **Excavation**: ₹8,000
+- **Labor**: ₹18,000
+
+**Specifications:**
+- Depth: 4-5 feet (as per IS 1904)
+- Width: 2 feet for load-bearing walls
+- Concrete Grade: M20 minimum
+- Steel: 12mm main bars, 8mm stirrups
+
+**Regional Variations:**
+- Mumbai/Delhi: Add 25-30% to costs
+- Tier-2 cities: Base rates apply
+- Rural areas: Reduce by 15-20%
+
+**मुख्य बातें**: 1000 वर्ग फुट के लिए ₹45,000-65,000, M20 कंक्रीट, 4-5 फुट गहराई।
+
+Would you like soil testing recommendations for your specific location?"
+
+🚫 **NEVER DO THIS:**
+- "What type of soil do you have?"
+- "What's your exact location?"
+- "What's your budget range?"
+- "Are you building residential or commercial?"
+
+✅ **ALWAYS DO THIS:**
+- Assume standard residential construction
+- Use typical Indian soil conditions (black cotton/alluvial)
+- Provide cost ranges for different scenarios
+- Give complete technical specifications
+- Include regional price variations
+
+🔧 **TECHNICAL ASSUMPTIONS:**
+- Residential construction (unless specified)
+- Standard Indian soil conditions
+- NBC 2016 compliance required
+- Seismic zone III (moderate earthquake zone)
+- Monsoon-resistant construction
+- Local material availability
+- Current market rates (mention price volatility)
+
+💰 **COST CALCULATION STANDARDS:**
+- Include 15-20% wastage for Indian conditions
+- Labor: 40-50% of material cost
+- Transport: 5-10% of material cost
+- Contractor margin: 15-20%
+- Regional multipliers: Mumbai (1.3x), Delhi (1.25x), Bangalore (1.2x), Tier-2 (1x), Rural (0.8x)
 
 
-Be practical, cost-conscious, and sensitive to Indian construction realities including monsoons, local labor practices, and budget constraints.`;
+BE DECISIVE. GIVE COMPLETE ANSWERS. MINIMIZE QUESTIONS.`;
 
 // Root endpoint
 app.get('/', (req, res) => {
-    res.json({ 
+    res.json({
         message: 'ConstructAI India - भारतीय निर्माण सहायक',
         status: 'healthy',
         timestamp: new Date().toISOString(),
@@ -129,8 +151,8 @@ app.get('/', (req, res) => {
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
-    res.json({ 
-        status: 'OK', 
+    res.json({
+        status: 'OK',
         timestamp: new Date().toISOString(),
         ai_ready: !!OPENAI_API_KEY,
         environment: process.env.NODE_ENV || 'development',
@@ -144,16 +166,16 @@ app.get('/api/health', (req, res) => {
 app.post('/api/chat/stream', async (req, res) => {
     try {
         const { message } = req.body;
-        
+
         if (!message || typeof message !== 'string') {
-            return res.status(400).json({ 
-                error: 'Message is required and must be a string' 
+            return res.status(400).json({
+                error: 'Message is required and must be a string'
             });
         }
 
         if (message.length > 4000) {
-            return res.status(400).json({ 
-                error: 'Message too long. Please keep it under 4000 characters.' 
+            return res.status(400).json({
+                error: 'Message too long. Please keep it under 4000 characters.'
             });
         }
 
@@ -167,6 +189,8 @@ app.post('/api/chat/stream', async (req, res) => {
 
         console.log(`📩 Streaming request: "${message.substring(0, 50)}..."`);
 
+        // In your streaming endpoint, update these parameters:
+
         const response = await axios.post('https://api.openai.com/v1/chat/completions', {
             model: 'gpt-3.5-turbo',
             messages: [
@@ -179,7 +203,7 @@ app.post('/api/chat/stream', async (req, res) => {
                     content: message
                 }
             ],
-            max_tokens: 1500, // Increased for detailed Indian responses
+            max_tokens: 2000, // ✅ INCREASED from 1500 for longer responses
             temperature: 0.7,
             presence_penalty: 0.1,
             frequency_penalty: 0.1,
@@ -198,14 +222,14 @@ app.post('/api/chat/stream', async (req, res) => {
         response.data.on('data', (chunk) => {
             try {
                 const lines = chunk.toString().split('\n').filter(line => line.trim() !== '');
-                
+
                 for (const line of lines) {
                     if (line.includes('[DONE]')) {
                         console.log('✅ Stream completed');
                         res.write('data: [DONE]\n\n');
                         return res.end();
                     }
-                    
+
                     if (line.startsWith('data: ')) {
                         if (!hasStarted) {
                             console.log('🚀 Stream started');
@@ -250,7 +274,7 @@ app.post('/api/chat/stream', async (req, res) => {
 
     } catch (error) {
         console.error('❌ OpenAI API Error:', error.response?.data || error.message);
-        
+
         if (!res.headersSent) {
             if (error.response?.status === 401) {
                 res.status(500).json({ error: 'Invalid API key configuration' });
@@ -271,16 +295,16 @@ app.post('/api/chat/stream', async (req, res) => {
 app.post('/api/chat', async (req, res) => {
     try {
         const { message } = req.body;
-        
+
         if (!message || typeof message !== 'string') {
-            return res.status(400).json({ 
-                error: 'Message is required and must be a string' 
+            return res.status(400).json({
+                error: 'Message is required and must be a string'
             });
         }
 
         if (message.length > 4000) {
-            return res.status(400).json({ 
-                error: 'Message too long. Please keep it under 4000 characters.' 
+            return res.status(400).json({
+                error: 'Message too long. Please keep it under 4000 characters.'
             });
         }
 
@@ -312,8 +336,8 @@ app.post('/api/chat', async (req, res) => {
 
         const aiResponse = response.data.choices[0].message.content;
         console.log(`✅ Response generated (${aiResponse.length} chars)`);
-        
-        res.json({ 
+
+        res.json({
             response: aiResponse,
             timestamp: new Date().toISOString(),
             model: 'gpt-3.5-turbo',
@@ -323,7 +347,7 @@ app.post('/api/chat', async (req, res) => {
 
     } catch (error) {
         console.error('❌ OpenAI API Error:', error.response?.data || error.message);
-        
+
         if (error.code === 'ECONNABORTED') {
             res.status(504).json({ error: 'Request timeout. Please try again.' });
         } else if (error.response?.status === 401) {
@@ -331,14 +355,14 @@ app.post('/api/chat', async (req, res) => {
         } else if (error.response?.status === 429) {
             res.status(429).json({ error: 'Rate limit exceeded. Please try again later.' });
         } else if (error.response?.status === 400) {
-            res.status(400).json({ 
-                error: 'Invalid request. Please check your message format.' 
+            res.status(400).json({
+                error: 'Invalid request. Please check your message format.'
             });
         } else if (error.response?.status >= 500) {
             res.status(503).json({ error: 'OpenAI service temporarily unavailable' });
         } else {
-            res.status(500).json({ 
-                error: 'AI service temporarily unavailable. Please try again.' 
+            res.status(500).json({
+                error: 'AI service temporarily unavailable. Please try again.'
             });
         }
     }
@@ -383,7 +407,7 @@ app.get('*', (req, res) => {
 // Error handling
 app.use((err, req, res, next) => {
     console.error('❌ Server Error:', err);
-    res.status(500).json({ 
+    res.status(500).json({
         error: 'Internal server error',
         timestamp: new Date().toISOString()
     });
