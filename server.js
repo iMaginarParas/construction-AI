@@ -8,80 +8,116 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// ✅ FIX 1: Trust proxy for Render/production environments
+// ✅ Trust proxy for Render/production environments
 app.set('trust proxy', 1);
 
-// ✅ FIX 2: Updated rate limiting middleware
+// ✅ Rate limiting middleware
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 50, // limit each IP to 50 requests per windowMs
+    max: 50,
     message: { 
         error: 'Too many requests from this IP, please try again later.' 
     },
     standardHeaders: true,
     legacyHeaders: false,
-    // Skip rate limiting for health checks
     skip: (req) => req.path === '/' || req.path === '/api/health' || req.path === '/api/info'
 });
 
-// ✅ FIX 3: Updated CORS for production
+// ✅ CORS for production
 app.use(cors({
     origin: process.env.NODE_ENV === 'production' 
-        ? true  // Allow all origins in production (can be restricted later)
+        ? true
         : ['http://localhost:3000', 'http://localhost:3001', 'http://127.0.0.1:3001'],
     credentials: true
 }));
 
 app.use(express.json({ limit: '10mb' }));
 app.use('/api', limiter);
-
-// Serve static files from public directory
 app.use(express.static('public'));
 
-// Environment variables
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
-// Validate API key on startup
 if (!OPENAI_API_KEY) {
     console.error('❌ OPENAI_API_KEY is not set in environment variables');
-    console.error('Please create a .env file with: OPENAI_API_KEY=your_api_key_here');
     process.exit(1);
 }
 
-// Optimized system prompt for faster responses
-const SYSTEM_PROMPT = `You are ConstructAI, a specialized construction industry expert. Provide concise, actionable advice with:
+// ✅ ENHANCED INDIAN CONSTRUCTION SYSTEM PROMPT
+const SYSTEM_PROMPT = `You are ConstructAI, India's leading AI construction expert specializing in Indian building standards, materials, and practices. You provide expert guidance following Indian construction norms.
 
-KEY AREAS:
-- Cost estimation & material calculations
-- Building codes & permit requirements  
-- Project planning & scheduling
-- Safety protocols & OSHA compliance
-- Structural engineering basics
-- Equipment recommendations
+🏗️ **CORE EXPERTISE (भारतीय निर्माण विशेषज्ञता):**
+- **Cost Estimation**: Material costs in ₹ per sq ft, labor rates across Indian cities
+- **Indian Building Codes**: NBC 2016, IS codes, local municipal bylaws
+- **Regional Materials**: Local availability, monsoon-suitable materials, climate considerations
+- **Indian Standards**: IS 456 (concrete), IS 800 (steel), IS 1893 (earthquake), IS 875 (loads)
+- **Local Practices**: Traditional + modern techniques, Vastu considerations
+- **Seasonal Planning**: Monsoon, summer, winter construction timing
 
-RESPONSE FORMAT:
-- Use **bold** for important terms, costs, and measurements
-- Use bullet points (•) for lists
-- Use numbered lists for step-by-step instructions
-- Include relevant safety warnings
-- Mention regional variations when applicable
-- Keep responses focused and practical
+🎯 **RESPONSE FORMAT (जवाब का प्रारूप):**
+- **Always provide bilingual responses** - English first, then key points in Hindi
+- Use **bold** for costs (₹), measurements, and important terms
+- Use *italics* for technical terms and specifications
+- Use bullet points (•) and numbered lists for clarity
+- Include 📊 **tables** for cost breakdowns
+- Add 🔍 **regional variations** for different Indian states
+- Include ⚠️ **monsoon/climate warnings**
 
-CALCULATIONS:
-- Show formulas when relevant
-- Include 10-15% waste allowance for materials
-- Reference current market pricing trends
-- Always recommend local verification
+📋 **INDIAN CONSTRUCTION STANDARDS:**
+- **Concrete Grades**: M15, M20, M25, M30 as per IS 456
+- **Steel**: Fe 415, Fe 500, Fe 550 grades
+- **Brick Standards**: Common, fly ash, AAC blocks
+- **Foundation**: Black cotton soil, laterite, alluvial considerations
+- **Seismic Zones**: Zone II to Zone V compliance
+- **Fire Safety**: NBC Part 4 requirements
 
-Be professional, accurate, and helpful while keeping responses concise.`;
+💰 **COST CALCULATIONS (भारतीय दरें):**
+- Provide costs in **₹ per sq ft** and **₹ per unit**
+- Include **15-20% wastage** for Indian conditions
+- **Regional price variations**: Tier 1/2/3 cities
+- **Labor costs**: Skilled/semi-skilled/unskilled rates
+- **Transport costs**: Local vs imported materials
+- **Seasonal pricing**: Peak vs off-season rates
 
-// ✅ FIX 4: Root endpoint for health check
+🌍 **REGIONAL CONSIDERATIONS:**
+- **North India**: Seismic zone considerations, extreme temperatures
+- **South India**: Monsoon drainage, coastal corrosion protection
+- **East India**: High humidity, cyclone resistance
+- **West India**: Desert conditions, water scarcity solutions
+- **Coastal Areas**: Salt air protection, foundation waterproofing
+- **Hill Stations**: Slope stability, landslide prevention
+
+🏛️ **COMPLIANCE & APPROVALS:**
+- **Municipal approvals**: Building plan sanctions, NOCs
+- **Environmental clearances**: Pollution board approvals
+- **Fire NOC**: Fire department clearances
+- **Structural drawings**: Licensed engineer requirements
+- **Vastu compliance**: Traditional architectural principles
+
+⚡ **RESPONSE STRUCTURE:**
+1. **Quick Answer** (तुरंत जवाब): Direct response with key figures
+2. **Detailed Breakdown**: Step-by-step explanation
+3. **Cost Analysis**: ₹ breakdowns with materials and labor
+4. **Indian Standards**: Relevant IS codes and NBC references
+5. **Regional Notes**: State-specific considerations
+6. **Hindi Summary**: Key points in Hindi (मुख्य बातें)
+7. **Next Steps**: Practical action items
+
+🔧 **FORMATTING EXAMPLES:**
+- **Material Cost**: ₹450-650 per sq ft (भौतिक लागत)
+- *Technical Term*: RCC slab as per *IS 456:2000*
+- **Important**: Always get soil testing done (मिट्टी जांच जरूरी)
+
+
+Be practical, cost-conscious, and sensitive to Indian construction realities including monsoons, local labor practices, and budget constraints.`;
+
+// Root endpoint
 app.get('/', (req, res) => {
     res.json({ 
-        message: 'ConstructAI is running!',
+        message: 'ConstructAI India - भारतीय निर्माण सहायक',
         status: 'healthy',
         timestamp: new Date().toISOString(),
-        version: '1.0.0',
+        version: '2.0.0 (India Edition)',
+        features: ['Indian Standards', 'Bilingual Support', 'Regional Pricing', 'IS Codes'],
         endpoints: {
             health: '/api/health',
             chat: '/api/chat',
@@ -99,6 +135,7 @@ app.get('/api/health', (req, res) => {
         ai_ready: !!OPENAI_API_KEY,
         environment: process.env.NODE_ENV || 'development',
         model: 'gpt-3.5-turbo',
+        region: 'India',
         uptime: process.uptime()
     });
 });
@@ -108,7 +145,6 @@ app.post('/api/chat/stream', async (req, res) => {
     try {
         const { message } = req.body;
         
-        // Input validation
         if (!message || typeof message !== 'string') {
             return res.status(400).json({ 
                 error: 'Message is required and must be a string' 
@@ -121,7 +157,6 @@ app.post('/api/chat/stream', async (req, res) => {
             });
         }
 
-        // Set headers for Server-Sent Events streaming
         res.writeHead(200, {
             'Content-Type': 'text/plain; charset=utf-8',
             'Cache-Control': 'no-cache',
@@ -132,9 +167,8 @@ app.post('/api/chat/stream', async (req, res) => {
 
         console.log(`📩 Streaming request: "${message.substring(0, 50)}..."`);
 
-        // Make streaming request to OpenAI
         const response = await axios.post('https://api.openai.com/v1/chat/completions', {
-            model: 'gpt-3.5-turbo', // Fast and cost-effective
+            model: 'gpt-3.5-turbo',
             messages: [
                 {
                     role: 'system',
@@ -145,23 +179,22 @@ app.post('/api/chat/stream', async (req, res) => {
                     content: message
                 }
             ],
-            max_tokens: 1200,
+            max_tokens: 1500, // Increased for detailed Indian responses
             temperature: 0.7,
             presence_penalty: 0.1,
             frequency_penalty: 0.1,
-            stream: true // Enable streaming
+            stream: true
         }, {
             headers: {
                 'Authorization': `Bearer ${OPENAI_API_KEY}`,
                 'Content-Type': 'application/json'
             },
             responseType: 'stream',
-            timeout: 30000 // 30 second timeout
+            timeout: 30000
         });
 
         let hasStarted = false;
 
-        // Handle streaming data
         response.data.on('data', (chunk) => {
             try {
                 const lines = chunk.toString().split('\n').filter(line => line.trim() !== '');
@@ -186,7 +219,6 @@ app.post('/api/chat/stream', async (req, res) => {
             }
         });
 
-        // Handle stream end
         response.data.on('end', () => {
             console.log('📝 Stream ended');
             if (!res.headersSent && !res.destroyed) {
@@ -198,7 +230,6 @@ app.post('/api/chat/stream', async (req, res) => {
             }
         });
 
-        // Handle stream errors
         response.data.on('error', (error) => {
             console.error('❌ Stream error:', error);
             if (!res.headersSent) {
@@ -206,7 +237,6 @@ app.post('/api/chat/stream', async (req, res) => {
             }
         });
 
-        // Timeout protection
         const timeout = setTimeout(() => {
             if (!res.headersSent) {
                 console.log('⏰ Stream timeout');
@@ -242,7 +272,6 @@ app.post('/api/chat', async (req, res) => {
     try {
         const { message } = req.body;
         
-        // Input validation
         if (!message || typeof message !== 'string') {
             return res.status(400).json({ 
                 error: 'Message is required and must be a string' 
@@ -269,7 +298,7 @@ app.post('/api/chat', async (req, res) => {
                     content: message
                 }
             ],
-            max_tokens: 1200,
+            max_tokens: 1500,
             temperature: 0.7,
             presence_penalty: 0.1,
             frequency_penalty: 0.1
@@ -278,7 +307,7 @@ app.post('/api/chat', async (req, res) => {
                 'Authorization': `Bearer ${OPENAI_API_KEY}`,
                 'Content-Type': 'application/json'
             },
-            timeout: 20000 // 20 second timeout
+            timeout: 20000
         });
 
         const aiResponse = response.data.choices[0].message.content;
@@ -288,13 +317,13 @@ app.post('/api/chat', async (req, res) => {
             response: aiResponse,
             timestamp: new Date().toISOString(),
             model: 'gpt-3.5-turbo',
+            region: 'India',
             usage: response.data.usage
         });
 
     } catch (error) {
         console.error('❌ OpenAI API Error:', error.response?.data || error.message);
         
-        // Enhanced error handling
         if (error.code === 'ECONNABORTED') {
             res.status(504).json({ error: 'Request timeout. Please try again.' });
         } else if (error.response?.status === 401) {
@@ -315,12 +344,15 @@ app.post('/api/chat', async (req, res) => {
     }
 });
 
-// API endpoints info
+// API info endpoint
 app.get('/api/info', (req, res) => {
     res.json({
-        name: 'ConstructAI API',
-        version: '1.0.0',
-        description: 'AI-powered construction industry assistant',
+        name: 'ConstructAI India',
+        version: '2.0.0',
+        description: 'AI-powered construction assistant for Indian building standards',
+        region: 'India',
+        languages: ['English', 'Hindi'],
+        standards: ['NBC 2016', 'IS Codes', 'Municipal Bylaws'],
         endpoints: {
             health: 'GET /api/health',
             chat: 'POST /api/chat',
@@ -328,19 +360,27 @@ app.get('/api/info', (req, res) => {
             info: 'GET /api/info'
         },
         models: ['gpt-3.5-turbo'],
-        features: ['streaming', 'rate-limiting', 'error-handling', 'cors-enabled'],
+        features: [
+            'Indian Building Standards',
+            'Bilingual Support (English/Hindi)',
+            'Regional Pricing (₹)',
+            'IS Code References',
+            'Monsoon Considerations',
+            'Vastu Guidelines',
+            'Municipal Compliance'
+        ],
         environment: process.env.NODE_ENV || 'development',
         uptime: process.uptime(),
         timestamp: new Date().toISOString()
     });
 });
 
-// Catch-all handler for SPA (Single Page Application)
+// Catch-all for SPA
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Global error handling middleware
+// Error handling
 app.use((err, req, res, next) => {
     console.error('❌ Server Error:', err);
     res.status(500).json({ 
@@ -349,25 +389,27 @@ app.use((err, req, res, next) => {
     });
 });
 
-// Start the server
+// Start server
 const server = app.listen(PORT, () => {
-    console.log('🏗️  ConstructAI Backend Server Started');
-    console.log('='.repeat(50));
+    console.log('🏗️  ConstructAI India - भारतीय निर्माण सहायक');
+    console.log('='.repeat(60));
     console.log(`🚀 Server running on port: ${PORT}`);
     console.log(`🔑 API Key configured: ${!!OPENAI_API_KEY}`);
-    console.log(`🤖 AI Model: gpt-3.5-turbo (fast & efficient)`);
+    console.log(`🤖 AI Model: gpt-3.5-turbo (India Edition)`);
     console.log(`⚡ Streaming: Enabled`);
+    console.log(`🇮🇳 Region: India (भारत)`);
+    console.log(`🗣️  Languages: English + Hindi`);
+    console.log(`📋 Standards: NBC 2016, IS Codes`);
+    console.log(`💰 Currency: Indian Rupees (₹)`);
     console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
-    console.log(`📡 CORS: ${process.env.NODE_ENV === 'production' ? 'Production mode (all origins)' : 'Development (localhost)'}`);
-    console.log(`🛡️  Trust Proxy: Enabled`);
-    console.log('='.repeat(50));
+    console.log('='.repeat(60));
     console.log(`📱 Frontend: http://localhost:${PORT}`);
-    console.log(`🔍 Health check: http://localhost:${PORT}/api/health`);
-    console.log(`📋 API info: http://localhost:${PORT}/api/info`);
-    console.log('='.repeat(50));
+    console.log(`🔍 Health: http://localhost:${PORT}/api/health`);
+    console.log(`📋 Info: http://localhost:${PORT}/api/info`);
+    console.log('='.repeat(60));
 });
 
-// Graceful shutdown handling
+// Graceful shutdown
 process.on('SIGTERM', () => {
     console.log('👋 SIGTERM received, shutting down gracefully...');
     server.close(() => {
@@ -384,7 +426,6 @@ process.on('SIGINT', () => {
     });
 });
 
-// Handle uncaught exceptions
 process.on('uncaughtException', (err) => {
     console.error('❌ Uncaught Exception:', err);
     process.exit(1);
