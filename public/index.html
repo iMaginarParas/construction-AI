@@ -50,7 +50,7 @@
             overflow: hidden;
         }
 
-        /* Header - Fixed */
+        /* Header - Fixed height */
         .header {
             background: var(--surface);
             border-bottom: 1px solid var(--border);
@@ -58,6 +58,9 @@
             flex-shrink: 0;
             z-index: 100;
             box-shadow: var(--shadow);
+            height: 4rem; /* Fixed header height */
+            display: flex;
+            align-items: center;
         }
 
         .header-content {
@@ -65,6 +68,8 @@
             align-items: center;
             justify-content: space-between;
             max-width: 100%;
+            width: 100%;
+            height: 100%;
         }
 
         .logo {
@@ -74,11 +79,12 @@
             font-size: 1.125rem;
             font-weight: 800;
             color: var(--text-primary);
+            height: 100%;
         }
 
         .logo-icon {
-            width: 2.25rem;
-            height: 2.25rem;
+            width: 2.5rem;
+            height: 2.5rem;
             background: linear-gradient(135deg, var(--primary), var(--primary-light));
             border-radius: 0.75rem;
             display: flex;
@@ -86,6 +92,27 @@
             justify-content: center;
             color: white;
             font-size: 1rem;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .logo-png {
+            width: 2rem;
+            height: 2rem;
+            object-fit: contain;
+            filter: brightness(0) invert(1);
+            max-width: 100%;
+            max-height: 100%;
+        }
+
+        /* Alternative: Direct logo image without background */
+        .logo-image {
+            height: 7.5rem;
+            width: auto;
+            max-width: 8rem;
+            object-fit: contain;
+            flex-shrink: 0;
+            border-radius: 0.5rem;
         }
 
         .status-indicator {
@@ -533,6 +560,7 @@
         @media (min-width: 769px) {
             .header {
                 padding: 1.25rem 2rem;
+                height: 5rem; /* Slightly taller on desktop */
             }
 
             .logo {
@@ -541,9 +569,19 @@
             }
 
             .logo-icon {
-                width: 3rem;
-                height: 3rem;
-                font-size: 1.5rem;
+                width: 3.5rem;
+                height: 3.5rem;
+                border-radius: 1rem;
+            }
+
+            .logo-png {
+                width: 4.5rem;
+                height: 4.5rem;
+            }
+
+            .logo-image {
+                height: 7.5rem;
+                max-width: 12rem;
                 border-radius: 1rem;
             }
 
@@ -651,8 +689,11 @@
         <header class="header">
             <div class="header-content">
                 <div class="logo">
-                    <div class="logo-icon">🏗</div>
-                    <span>Builder.Wtf</span>
+                    
+                    
+                    <!-- Option 2: Direct PNG image (uncomment to use instead) -->
+                    <img src="logo.png" alt="Builder.Wtf" class="logo-image">
+                    
                 </div>
                 <div class="status-indicator" id="connectionStatus">
                     <div class="status-dot"></div>
